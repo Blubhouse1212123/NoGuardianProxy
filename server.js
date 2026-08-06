@@ -9,9 +9,44 @@ app.get("/", (req, res) => {
 });
 function rewriteHtml(html, baseUrl) {
     const $ = cheerio.load(html);
-    $("base").remove();
+    $("img").each((i, el) => {
+        const src = $(el).attr("src");
+        if (src) {
+            $(el).attr(
+                "src",
+                new URL(src, baseUrl).href
+            );
+        }
+    });
+    $("script").each((i, el) => {
+        const src = $(el).attr("src");
+        if (src) {
+            $(el).attr(
+                "src",
+                new URL(src, baseUrl).href
+            );
+        }
+    });   
+    $("link").each((i, el) => {
+        const href = $(el).attr("href");
+        if (href) {
+            $(el).attr(
+                "href",
+                new URL(href, baseUrl).href
+            );
+        }
+    });
+    $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        if (href) {
+            $(el).attr(
+                "href",
+                new URL(href, baseUrl).href
+            );
+        }
+    });
     $("head").prepend(
-        `<base href="#{baseUrl}">`
+        `<base href="${baseUrl}">`
     );
     return $.html();
 }
