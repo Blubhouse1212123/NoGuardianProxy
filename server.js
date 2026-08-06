@@ -48,6 +48,21 @@ function rewriteHtml(html, baseUrl) {
     $("head").prepend(
         `<base href="${baseUrl}">`
     );
+    const script = `
+    <script>
+    window.open = function(url) {
+    
+        window.parent.postMessage(
+            {
+                type: "navigate",
+                url: url
+            },
+            "*"
+        );
+    };
+    </script>
+    `;
+    $("body").prepend(script);
     return $.html();
 }
 app.post("/browse", async (req, res) => {
