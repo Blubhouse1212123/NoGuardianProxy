@@ -77,6 +77,16 @@ app.post("/browse", async (req, res) => {
             html,
             url
         );
+        res.setHeader(
+            "Content-Type",
+            "text/html"
+        );
+        res.removeHeader(
+            "X-Frame-Options"
+        );
+        res.removeHeader(
+            "Content-Security-Policy"
+        );
         res.send(rewritten);
     } catch(error) {
         console.error(error);
