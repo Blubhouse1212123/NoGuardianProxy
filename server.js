@@ -113,6 +113,7 @@ function rewriteHtml(html, baseUrl) {
     );
     const script = `
     <script>
+    alert("running injector");
     window.open = function(url) {
     
         window.parent.postMessage(
