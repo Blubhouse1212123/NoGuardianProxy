@@ -7,7 +7,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Proxy Online!");
 });
-const PROXY = "https://noguardianproxy.onrender.com/proxy?url=";
+const PROXY = "/proxy?url=";
 function proxify(url, baseUrl) {
     return PROXY + encodeURIComponent(url) + "&base=" + encodeURIComponent(baseUrl);
 }
@@ -108,9 +108,9 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute, baseUrl)
         );
     });
-    $("head").prepend(
-        `<base href="${PROXY}${encodeURIComponent(baseUrl)}">`
-    );
+    //$("head").prepend(
+        //`<base href="${PROXY}${encodeURIComponent(baseUrl)}">`
+    //);
     const script = `
     <script>
     //alert("running injector");
@@ -162,41 +162,41 @@ function rewriteHtml(html, baseUrl) {
             }
         }
     );
-    window.fetch = new Proxy(window.fetch,{
-        apply(target,thisArg,args){
-            if(typeof args[0] === "string"){
-                const absoloute = 
-                new URL(
-                    args[0],
-                    document.baseURI
-                ).href
-                args[0] = "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI);
-            }
-            return target.apply(
-                thisArg,
-                args
-            );
-        }
-    });
-    const originalOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(
-        method,
-        url,
-        ...rest
-    ){
+    //window.fetch = new Proxy(window.fetch,{
+        //apply(target,thisArg,args){
+            //if(typeof args[0] === "string"){
+                //const absoloute = 
+                //new URL(
+                    //args[0],
+                    //document.baseURI
+                //).href
+                //args[0] = "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI);
+            //}
+            //return target.apply(
+                //thisArg,
+                //args
+            //);
+        //}
+    //});
+    //const originalOpen = XMLHttpRequest.prototype.open;
+    //XMLHttpRequest.prototype.open = function(
+        //method,
+        //url,
+        //...rest
+    //){
         
-        const absoloute = 
-        new URL(
-            url,
-            document.baseURI
-        ).href
-        return originalOpen.call(
-            this,
-            method,
-            "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI),
-            ...rest
-        );
-    };
+      //  const absoloute = 
+        //new URL(
+          //  url,
+            //document.baseURI
+        //).href
+        //return originalOpen.call(
+         //   this,
+          //  method,
+           // "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI),
+            //...rest
+        //);
+    //};
     document.addEventListener("click", (e) => {
         const a = e.target.closest("a");
         if (a) {
@@ -257,7 +257,7 @@ function rewriteHtml(html, baseUrl) {
 }
 app.get("/proxy", async (req, res) => {
     try {
-        const url = req.query.url;
+        const url = decodeURIComponent(req.query.url);
         const base = req.query.base || url;
         if (!url) {
             return res.status(400).send("Missing Url");
