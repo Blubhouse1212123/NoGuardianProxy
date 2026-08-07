@@ -8,8 +8,8 @@ app.get("/", (req, res) => {
     res.send("Proxy Online!");
 });
 const PROXY = "https://noguardianproxy.onrender.com/proxy?url=";
-function proxify(url) {
-    return PROXY + encodeURIComponent(url);
+function proxify(url, baseUrl) {
+    return PROXY + encodeURIComponent(url) + "&base=" + encodeURIComponent(baseUrl);
 }
 function rewriteHtml(html, baseUrl) {
     const $ = cheerio.load(html);
@@ -19,7 +19,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(src, baseUrl).href;
         $(el).attr(
             "src",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     });
     $("img").each((_, el) => {
@@ -50,7 +50,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(src, baseUrl).href;
         $(el).attr(
             "src",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     });   
     $("link").each((_, el) => {
@@ -59,7 +59,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(href, baseUrl).href;
         $(el).attr(
             "href",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     });
     $("a").each((_, el) => {
@@ -68,7 +68,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(href, baseUrl).href;
         $(el).attr(
             "href",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     });
     $("form").each((_, el) => {
@@ -77,7 +77,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(action, baseUrl).href;
         $(el).attr(
             "action",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     }); 
     $("iframe").each((_, el) => {
@@ -86,7 +86,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(src, baseUrl).href;
         $(el).attr(
             "src",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     }); 
     $("video").each((_, el) => {
@@ -95,7 +95,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(src, baseUrl).href;
         $(el).attr(
             "src",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     }); 
     $("source").each((_, el) => {
@@ -104,7 +104,7 @@ function rewriteHtml(html, baseUrl) {
         const absoloute = new URL(src, baseUrl).href;
         $(el).attr(
             "src",
-            proxify(absoloute)
+            proxify(absoloute, baseUrl)
         );
     });
     $("head").prepend(
@@ -160,6 +160,42 @@ function rewriteHtml(html, baseUrl) {
             }
         }
     );
+    window.fetch = new Proxy(window.fetch,{
+        apply(target,thisArg,args){
+            if(typeof args[0] === "string"){
+                const absoloute = 
+                new URL(
+                    args[0],
+                    document.baseURI
+                ).href
+                args[0] = "${PROXY}" + encodeURIComponent(absoloute);
+            }
+            return target.apply(
+                thisArg,
+                args
+            );
+        }
+    });
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(
+        method,
+        url,
+        ...rest
+    ){
+        
+        const absoloute = 
+        new URL(
+            url,
+            document.baseURI
+        ).href
+        return originalOpen.call(
+            this,
+            method,
+            "${PROXY}" + 
+            encodeURIComponent(absoloute),
+            ...rest
+        );
+    };
     </script>
     `;
     $("meta[http-equiv='refresh']").each((_, el)=> {
@@ -174,7 +210,7 @@ function rewriteHtml(html, baseUrl) {
         ).href;
         $(el).attr(
             "content",
-            "0;url=" + proxify(absoloute)
+            "0;url=" + proxify(absoloute, baseUrl)
         );
     });
     $("head").prepend(script);
@@ -183,6 +219,7 @@ function rewriteHtml(html, baseUrl) {
 app.get("/proxy", async (req, res) => {
     try {
         const url = req.query.url;
+        const base = req.query.base || url;
         if (!url) {
             return res.status(400).send("Missing Url");
         }
@@ -209,7 +246,7 @@ app.get("/proxy", async (req, res) => {
         response.headers.get("content-type") || "";
         if(type.includes("text/html")) {
             let html = await response.text();
-            html = rewriteHtml(html, url);
+            html = rewriteHtml(html, base);
             res.setHeader(
                 "Content-Type",
                 "text/html; charset=utf-8"
@@ -231,13 +268,9 @@ app.get("/proxy", async (req, res) => {
         );
     }
 });
-app.use(async (req, res) => {
-    const target = req.originalUrl;
-    res.redirect(
-        "/proxy?url=" +
-        encodeURIComponent(
-            "https://eaglercraft.com" + target
-        )
+app.use((req, res) => {
+    res.status(404).send(
+        "Proxy route missing"
     );
 });
 app.listen(process.env.PORT || 3000, () => {
