@@ -22,6 +22,28 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute)
         );
     });
+    $("img").each((_, el) => {
+        const srcset = $(el).attr("srcset");
+        if (!srcset) return;
+        const fixed = 
+        srcset.split(",")
+        .map(item => {
+            let parts = item.trim().split(" ");
+            parts[0] = 
+            proxify(
+                new URL(
+                    parts[0],
+                    baseUrl
+                ).href
+            );
+            return parts.join(" ");
+        })
+        .join(",");
+        $(el).attr(
+            "srcset",
+            fixed
+        );
+    });
     $("script").each((_, el) => {
         const src = $(el).attr("src");
         if (!src) return;
@@ -84,7 +106,7 @@ function rewriteHtml(html, baseUrl) {
             "src",
             proxify(absoloute)
         );
-    }); 
+    });
     //$("head").prepend(
       //  `<base href="${baseUrl}">`
     //);
@@ -102,7 +124,7 @@ function rewriteHtml(html, baseUrl) {
     };
     const originalAssign = location.assign;
     location.assign = function(url) {
-        window.paent.postMessage(
+        window.parent.postMessage(
             {
                 type:"navigate",
                 url: url
@@ -112,7 +134,7 @@ function rewriteHtml(html, baseUrl) {
     };
     const originalReplace = location.replace;
     location.replace = function(url) {
-        window.paent.postMessage(
+        window.parent.postMessage(
             {
                 type:"navigate",
                 url: url
@@ -140,6 +162,21 @@ function rewriteHtml(html, baseUrl) {
     );
     </script>
     `;
+    $("meta[http-equiv='refresh']").each((_, el)=> {
+        const content = $(el).attr("content");
+        if (!content) return;
+        const match = content.match(/url=(.*)/i);
+        if (!match) return;
+        const absoloute = 
+        new URL(
+            match[1],
+            baseUrl
+        ).href;
+        $(el).attr(
+            "content",
+            "0;url=" + proxify(absoloute)
+        );
+    });
     $("head").prepend(script);
     return $.html();
 }
