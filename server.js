@@ -34,7 +34,8 @@ function rewriteHtml(html, baseUrl) {
                 new URL(
                     parts[0],
                     baseUrl
-                ).href
+                ).href,
+                baseUrl
             );
             return parts.join(" ");
         })
@@ -168,7 +169,7 @@ function rewriteHtml(html, baseUrl) {
                     args[0],
                     document.baseURI
                 ).href
-                args[0] = "${PROXY}" + encodeURIComponent(absoloute);
+                args[0] = "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI);
             }
             return target.apply(
                 thisArg,
@@ -191,8 +192,7 @@ function rewriteHtml(html, baseUrl) {
         return originalOpen.call(
             this,
             method,
-            "${PROXY}" + 
-            encodeURIComponent(absoloute),
+            "${PROXY}" + encodeURIComponent(absoloute) + "&base=" + encodeURIComponent(document.baseURI),
             ...rest
         );
     };
