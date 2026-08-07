@@ -194,9 +194,12 @@ app.get("/proxy", async (req, res) => {
         });
         response.headers.forEach((value, key)=>{
             const blocked = [
+                "content-encoding",
+                "content-length",
+                "transfer-encoding",
+                "content-disposition",
                 "x-frame-options",
-                "content-security-policy",
-                "content-disposition"
+                "content-security-policy"
             ];
             if (!blocked.includes(key.toLowerCase())) {
                 res.setHeader(key, value);
