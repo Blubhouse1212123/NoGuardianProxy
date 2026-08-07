@@ -108,21 +108,26 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute, baseUrl)
         );
     });
-    //$("head").prepend(
-        //`<base href="${PROXY}${encodeURIComponent(baseUrl)}">`
-    //);
+    $("head").prepend(
+        `<base href="${baseUrl}/">`
+    );
+    $("head").prepend(`
+        <script>
+        window.__ORIGINAL_BASE__ = "${baseUrl}";
+        </script>
+    `);
     const script = `
     <script>
     //alert("running injector");
     function proxyUrl(url){
         const absoloute = new URL(
             url,
-            document.baseURI
+            window.__ORIGINAL_BASE_
         ).href
         return "${PROXY}" + 
         encodeURIComponent(absoloute) +
         "&base=" +
-        encodeURIComponent(document.baseURI);
+        encodeURIComponent(window.__ORIGINAL_BASE__);
     }
     window.open = function(url) {
     
@@ -213,32 +218,32 @@ function rewriteHtml(html, baseUrl) {
             console.log(a.href);
         }
     }, true);
-    const oldScriptSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");
-    Object.defineProperty(
-        HTMLScriptElement.prototype,
-        "src",
-        {
-            set(url){
-                oldScriptSrc.set.call(this, proxyUrl(url));
-            },
-            get(){
-                return oldScriptSrc.get.call(this);
-            }
-        }
-    );
-    const oldImgSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
-    Object.defineProperty(
-        HTMLImageElement.prototype,
-        "src",
-        {
-            set(url){
-                oldImgSrc.set.call(this, proxyUrl(url));
-            },
-            get(){
-                return oldImgSrc.get.call(this);
-            }
-        }
-    );
+    //const oldScriptSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");
+    //Object.defineProperty(
+     //   HTMLScriptElement.prototype,
+      //  "src",
+       // {
+        //    set(url){
+         //       oldScriptSrc.set.call(this, proxyUrl(url));
+          //  },
+           // get(){
+            //    return oldScriptSrc.get.call(this);
+          //  }
+      //  }
+   // );
+   // const oldImgSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+    //Object.defineProperty(
+     //   HTMLImageElement.prototype,
+      //  "src",
+       // {
+      //      set(url){
+         //       oldImgSrc.set.call(this, proxyUrl(url));
+         //   },
+          //  get(){
+         //       return oldImgSrc.get.call(this);
+         //   }
+       // }
+    //);
     if(navigator.serviceWorker){
         navigator.serviceWorker.register = 
         function(){
