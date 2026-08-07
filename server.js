@@ -48,6 +48,42 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute)
         );
     });
+    $("form").each((_, el) => {
+        const action = $(el).attr("action");
+        if (!action) return;
+        const absoloute = new URL(action, baseUrl).href;
+        $(el).attr(
+            "action",
+            proxify(absoloute)
+        );
+    }); 
+    $("iframe").each((_, el) => {
+        const src = $(el).attr("src");
+        if (!src) return;
+        const absoloute = new URL(src, baseUrl).href;
+        $(el).attr(
+            "src",
+            proxify(absoloute)
+        );
+    }); 
+    $("video").each((_, el) => {
+        const src = $(el).attr("src");
+        if (!src) return;
+        const absoloute = new URL(src, baseUrl).href;
+        $(el).attr(
+            "src",
+            proxify(absoloute)
+        );
+    }); 
+    $("source").each((_, el) => {
+        const src = $(el).attr("src");
+        if (!src) return;
+        const absoloute = new URL(src, baseUrl).href;
+        $(el).attr(
+            "src",
+            proxify(absoloute)
+        );
+    }); 
     //$("head").prepend(
       //  `<base href="${baseUrl}">`
     //);
