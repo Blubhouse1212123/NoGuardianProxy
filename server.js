@@ -108,9 +108,9 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute, baseUrl)
         );
     });
-    $("head").prepend(
-        `<base href="${baseUrl}/">`
-    );
+    //$("head").prepend(
+        //`<base href="${baseUrl}/">`
+    //);
     $("head").prepend(`
         <script>
         window.__ORIGINAL_BASE__ = "${baseUrl}";
