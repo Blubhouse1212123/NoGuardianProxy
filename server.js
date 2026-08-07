@@ -65,7 +65,7 @@ function rewriteHtml(html, baseUrl) {
     $("body").prepend(script);
     return $.html();
 }
-app.post("/browse", async (req, res) => {
+app.get("/browse", async (req, res) => {
     try {
         const url = req.body.url;
         if (!url) {
