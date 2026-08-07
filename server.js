@@ -228,7 +228,7 @@ app.get("/proxy", async (req, res) => {
         );
     }
 });
-app.get("*", async (req, res) => {
+app.use(async (req, res) => {
     const target = req.originalUrl;
     res.redirect(
         "/proxy?url=" +
