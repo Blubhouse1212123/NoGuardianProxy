@@ -7,8 +7,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Proxy Online!");
 });
+const PROXY = "https://noguardianproxy.onrender.com/proxy?url=";
 function proxify(url) {
-    return `/browse?url=${encodeURIComponent(url)}`;
+    return PROXY + encodeURIComponent(url);
 }
 function rewriteHtml(html, baseUrl) {
     const $ = cheerio.load(html);
@@ -123,7 +124,7 @@ function rewriteHtml(html, baseUrl) {
         history.pushState,
         {
             apply(target, thisArg,args){
-                window.parent.postmessage(
+                window.parent.postMessage(
                     {
                         type:"navigate",
                         url:args[2]
@@ -142,13 +143,18 @@ function rewriteHtml(html, baseUrl) {
     $("head").prepend(script);
     return $.html();
 }
-app.get("/browse", async (req, res) => {
+app.get("/proxy", async (req, res) => {
     try {
         const url = req.query.url;
         if (!url) {
             return res.status(400).send("Missing Url");
         }
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                "User-Agent":
+                "Mozilla/5.0 Chrome/120 Safari/537.36"
+            }
+        });
         res.removeHeader(
             "X-Frame-Options"
         );
@@ -158,29 +164,26 @@ app.get("/browse", async (req, res) => {
         const type = 
         response.headers.get("content-type") || "";
         if(type.includes("text/html")) {
-            const html = await response.text();
-            const rewritten =
-            rewriteHtml(html, url);
+            let html = await response.text();
+            html = rewriteHtml(html, url);
             res.setHeader(
                 "Content-Type",
-                "text/html"
+                "text/html; charset=utf-8"
             );
-            return res.send(rewritten);
+            return res.send(html);
         }
-        const buffer = 
-        await response.arrayBuffer();
+        const buffer = await response.arrayBuffer();
         res.setHeader(
             "Content-Type",
             type
         );
-        res.send(
+        return res.send(
             Buffer.from(buffer)
         );
-        //res.send(rewritten);
     } catch(error) {
         console.error(error);
         res.status(500).send(
-            "Failed to fetch website"
+            "Proxy failed"
         );
     }
 });
