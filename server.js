@@ -114,6 +114,16 @@ function rewriteHtml(html, baseUrl) {
     const script = `
     <script>
     //alert("running injector");
+    function proxyUrl(url){
+        const absoloute = new URL(
+            url,
+            document.baseURI
+        ).href
+        return "${PROXY}" + 
+        encodeURIComponent(absoloute) +
+        "&base=" +
+        encodeURIComponent(document.baseURI);
+    }
     window.open = function(url) {
     
         window.parent.postMessage(
@@ -216,9 +226,9 @@ function rewriteHtml(html, baseUrl) {
             }
         }
     );
-    const oldImgSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");
+    const oldImgSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
     Object.defineProperty(
-        HTMLScriptElement.prototype,
+        HTMLImageElement.prototype,
         "src",
         {
             set(url){
