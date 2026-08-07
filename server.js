@@ -192,12 +192,16 @@ app.get("/proxy", async (req, res) => {
                 "Mozilla/5.0 Chrome/120 Safari/537.36"
             }
         });
-        res.removeHeader(
-            "X-Frame-Options"
-        );
-        res.removeHeader(
-            "Content-Security-Policy"
-        );
+        response.headers.forEach((value, key)=>{
+            const blocked = [
+                "x-frame-options",
+                "content-security-policy",
+                "content-disposition"
+            ];
+            if (!blocked.includes(key.toLowerCase())) {
+                res.setHeader(key, value);
+            }
+        });
         const type = 
         response.headers.get("content-type") || "";
         if(type.includes("text/html")) {
