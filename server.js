@@ -196,6 +196,12 @@ function rewriteHtml(html, baseUrl) {
             ...rest
         );
     };
+    document.addEventListener("click", (e) => {
+        const a = e.target.closest("a");
+        if (a) {
+            console.log(a.href);
+        }
+    }, true);
     </script>
     `;
     $("meta[http-equiv='refresh']").each((_, el)=> {
