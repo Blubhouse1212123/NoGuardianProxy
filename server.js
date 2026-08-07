@@ -107,9 +107,9 @@ function rewriteHtml(html, baseUrl) {
             proxify(absoloute)
         );
     });
-    //$("head").prepend(
-      //  `<base href="${baseUrl}">`
-    //);
+    $("head").prepend(
+        `<base href="${PROXY}${encodeURIComponent(baseUrl)}">`
+    );
     const script = `
     <script>
     window.open = function(url) {
@@ -223,6 +223,15 @@ app.get("/proxy", async (req, res) => {
             "Proxy failed"
         );
     }
+});
+app.get("*", async (req, res) => {
+    const target = req.originalUrl;
+    res.redirect(
+        "/proxy?url=" +
+        encodeURIComponent(
+            "https://eaglercraft.com" + target
+        )
+    );
 });
 app.listen(process.env.PORT || 3000, () => {
     console.log("Server Started!");
