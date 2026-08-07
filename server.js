@@ -7,47 +7,50 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Proxy Online!");
 });
+function proxify(url) {
+    return `/browse?url=${encodeURIComponent(url)}`;
+}
 function rewriteHtml(html, baseUrl) {
     const $ = cheerio.load(html);
-    $("img").each((i, el) => {
+    $("img").each((_, el) => {
         const src = $(el).attr("src");
-        if (src) {
-            $(el).attr(
-                "src",
-                new URL(src, baseUrl).href
-            );
-        }
+        if (!src) return;
+        const absoloute = new URL(src, baseUrl).href;
+        $(el).attr(
+            "src",
+            proxify(absoloute)
+        );
     });
-    $("script").each((i, el) => {
+    $("script").each((_, el) => {
         const src = $(el).attr("src");
-        if (src) {
-            $(el).attr(
-                "src",
-                new URL(src, baseUrl).href
-            );
-        }
+        if (!src) return;
+        const absoloute = new URL(src, baseUrl).href;
+        $(el).attr(
+            "src",
+            proxify(absoloute)
+        );
     });   
-    $("link").each((i, el) => {
+    $("link").each((_, el) => {
         const href = $(el).attr("href");
-        if (href) {
-            $(el).attr(
-                "href",
-                new URL(href, baseUrl).href
-            );
-        }
+        if (!href) return;
+        const absoloute = new URL(href, baseUrl).href;
+        $(el).attr(
+            "href",
+            proxify(absoloute)
+        );
     });
-    $("a").each((i, el) => {
+    $("a").each((_, el) => {
         const href = $(el).attr("href");
-        if (href) {
-            $(el).attr(
-                "href",
-                new URL(href, baseUrl).href
-            );
-        }
+        if (!href) return;
+        const absoloute = new URL(href, baseUrl).href;
+        $(el).attr(
+            "href",
+            proxify(absoloute)
+        );
     });
-    $("head").prepend(
-        `<base href="${baseUrl}">`
-    );
+    //$("head").prepend(
+      //  `<base href="${baseUrl}">`
+    //);
     const script = `
     <script>
     window.open = function(url) {
@@ -62,32 +65,44 @@ function rewriteHtml(html, baseUrl) {
     };
     </script>
     `;
-    $("body").prepend(script);
+    $("head").prepend(script);
     return $.html();
 }
-app.post("/browse", async (req, res) => {
+app.get("/browse", async (req, res) => {
     try {
-        const url = req.body.url;
+        const url = req.query.url;
         if (!url) {
             return res.status(400).send("Missing Url");
         }
         const response = await fetch(url);
-        const html = await response.text();
-        const rewritten = rewriteHtml(
-            html,
-            url
-        );
-        res.setHeader(
-            "Content-Type",
-            "text/html"
-        );
         res.removeHeader(
             "X-Frame-Options"
         );
         res.removeHeader(
             "Content-Security-Policy"
         );
-        res.send(rewritten);
+        const type = 
+        response.headers.get("content-type") || "";
+        if(type.includes("text/html")) {
+            const html = await response.text();
+            const rewritten =
+            rewriteHtml(html, url);
+            res.setHeader(
+                "Content-Type",
+                "text/html"
+            );
+            return res.send(rewritten);
+        }
+        const buffer = 
+        await response.arrayBuffer();
+        res.setHeader(
+            "Content-Type",
+            type
+        );
+        res.send(
+            Buffer.from(buffer)
+        );
+        //res.send(rewritten);
     } catch(error) {
         console.error(error);
         res.status(500).send(
