@@ -63,6 +63,44 @@ function rewriteHtml(html, baseUrl) {
             "*"
         );
     };
+    const originalAssign = location.assign;
+    location.assign = function(url) {
+        window.paent.postMessage(
+            {
+                type:"navigate",
+                url: url
+            },
+            "*"
+        );
+    };
+    const originalReplace = location.replace;
+    location.replace = function(url) {
+        window.paent.postMessage(
+            {
+                type:"navigate",
+                url: url
+            },
+            "*"
+        );        
+    };
+    history.pushState = new Proxy(
+        history.pushState,
+        {
+            apply(target, thisArg,args){
+                window.parent.postmessage(
+                    {
+                        type:"navigate",
+                        url:args[2]
+                    },
+                    "*"
+                );
+                return target.apply(
+                    thisArg,
+                    args
+                );
+            }
+        }
+    );
     </script>
     `;
     $("head").prepend(script);
