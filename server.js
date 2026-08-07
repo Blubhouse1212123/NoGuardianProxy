@@ -113,7 +113,7 @@ function rewriteHtml(html, baseUrl) {
     );
     const script = `
     <script>
-    alert("running injector");
+    //alert("running injector");
     window.open = function(url) {
     
         window.parent.postMessage(
@@ -203,6 +203,38 @@ function rewriteHtml(html, baseUrl) {
             console.log(a.href);
         }
     }, true);
+    const oldScriptSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");
+    Object.defineProperty(
+        HTMLScriptElement.prototype,
+        "src",
+        {
+            set(url){
+                oldScriptSrc.set.call(this, proxyUrl(url));
+            },
+            get(){
+                return oldScriptSrc.get.call(this);
+            }
+        }
+    );
+    const oldImgSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, "src");
+    Object.defineProperty(
+        HTMLScriptElement.prototype,
+        "src",
+        {
+            set(url){
+                oldImgSrc.set.call(this, proxyUrl(url));
+            },
+            get(){
+                return oldImgSrc.get.call(this);
+            }
+        }
+    );
+    if(navigator.serviceWorker){
+        navigator.serviceWorker.register = 
+        function(){
+            return Promise.reject();
+        };
+    }  
     </script>
     `;
     $("meta[http-equiv='refresh']").each((_, el)=> {
